@@ -203,7 +203,7 @@ async def neuronal(background_tasks: BackgroundTasks, x_api_key: str = Header(No
     params = train_params['neuralNetworkParams']
     epocas = int(params['epocs'])
     b_size = int(params['batchsize'])
-    estop = int(params['earlystopping'])
+    estop = int(params['earlystopping'].lower()=='true')
 
     print(parametros_entrenamiento)
 
@@ -279,8 +279,8 @@ async def prediccion(background_tasks: BackgroundTasks, x_api_key: str = Header(
 
 
 @app.get("/")
-def health_check():
-    return { {"message": "API funcionando correctamente"}}
+async def health_check():
+    return {"message": "API funcionando correctamente"}
 
 
 if __name__ == "__main__":
