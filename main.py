@@ -19,8 +19,17 @@ from clustering import kmeans, minibatchKmeans, sustractivo, bisectingKMeans, ga
 import entrenamiento as train
 import os
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 load_dotenv()
 API_KEY = os.getenv("API_KEY")
