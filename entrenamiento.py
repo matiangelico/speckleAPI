@@ -7,11 +7,12 @@ from keras.layers import BatchNormalization, Dropout, Dense
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
 from keras.callbacks import EarlyStopping
-from generaImagenMatrizConf import cmcm
+from generadorImagenes import generaImagenMatrizConf
 
-def entrenamientoRed (X, Y, nro_clusters, params, epochs, batch_size, estopping):
+def entrenamientoRed (data, nro_clusters, params, epochs, batch_size, estopping):
 
-    #Y = to_categorical(Y, nro_clusters)
+    X = data[:,:-1]
+    Y = data[:,-1] 
 
     X_train, X_temp, Y_train, Y_temp = train_test_split(X, Y, test_size=0.30, random_state=42)  
     X_val, X_test, Y_val, Y_test = train_test_split(X_temp, Y_temp, test_size=0.50, random_state=42)
@@ -19,8 +20,7 @@ def entrenamientoRed (X, Y, nro_clusters, params, epochs, batch_size, estopping)
     early_stopping = EarlyStopping(monitor='loss', patience=5, restore_best_weights=True)
 
     model = keras.Sequential([
-        keras.layers.Input(shape = (X.shape[1],)), 
-        keras.layers.Dense(X.shape[1], activation='relu')
+        keras.layers.Input(shape = (X.shape[1],))
     ])
 
     for datos in params:
@@ -41,15 +41,13 @@ def entrenamientoRed (X, Y, nro_clusters, params, epochs, batch_size, estopping)
     model.fit(X_train, Y_train, validation_data=(X_val, Y_val), epochs=epochs, batch_size=batch_size, verbose=1, callbacks=callbacks)
 
     Y_pred = model.predict(X_test)
+
     Y_pred_classes = np.argmax(Y_pred, axis=1)  
     Y_true_classes = Y_test  
 
     conf_matrix = confusion_matrix(Y_true_classes, Y_pred_classes)
 
-    imagen_conf_matrix = cmcm(conf_matrix, Y_true_classes, Y_pred_classes)
-
-    #print("Matriz de Confusión:")
-    #print(conf_matrix)
+    imagen_conf_matrix = generaImagenMatrizConf.cmcm(conf_matrix, Y_true_classes, Y_pred_classes)
 
     return model, imagen_conf_matrix
 

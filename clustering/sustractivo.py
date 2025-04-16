@@ -1,7 +1,7 @@
 import numpy as np
 from numba import njit, prange
 
-def subtractive_clustering(data, ra, rb, Eup, Edown):
+def subtractive_clustering(data, ra, rb, Eup, Edown, max_clusters = 20):
 
     ra = float(ra)
     rb = float(rb)
@@ -13,10 +13,16 @@ def subtractive_clustering(data, ra, rb, Eup, Edown):
     max_potential_value = np.max(potential)
     max_potential_index = np.argmax(potential)
     cluster_centers = []
+
+    supero20 = False
     
     while max_potential_value > 0:
         max_potential_vector = data[max_potential_index]
         potential_ratio = max_potential_value / np.max(potential)
+
+        if len(cluster_centers) >= max_clusters:  
+            supero20 = True
+            break
         
         if potential_ratio > Eup:
             cluster_centers.append(max_potential_vector)
@@ -33,7 +39,13 @@ def subtractive_clustering(data, ra, rb, Eup, Edown):
         
         max_potential_value = np.max(potential)
         max_potential_index = np.argmax(potential)
-    
+
+    if (len(cluster_centers)==0)or supero20:
+        if supero20:
+            print('mas de 20')
+        else:
+            print ('No clusters')
+        return None
     return np.array(cluster_centers)
 
 @njit(parallel=True)
@@ -56,13 +68,21 @@ def update_potential(potential, data, max_vector, max_value, rb):
 
 def classify_points(data, a, b, cluster_centers):  
     labels = np.zeros(data.shape[0], dtype=np.int32)
-    for i in range(data.shape[0]):
-        labels[i] = np.argmin(np.sum((cluster_centers - data[i]) ** 2, axis=1))
-    return labels.reshape(a, b) 
+    if cluster_centers.shape[0] != 0:
+        for i in range(data.shape[0]):
+            labels[i] = np.argmin(np.sum((cluster_centers - data[i]) ** 2, axis=1))
+        return labels.reshape(a, b)
+    else:
+        return None 
 
 def sub(tensor, ra,rb,Eup,Edown):
     a,b,c = tensor.shape
     data = tensor.reshape(-1, c)
+    print(data.shape)
     cluster_centers = subtractive_clustering(data,ra,rb,Eup,Edown)
-    return classify_points(data, a, b, cluster_centers), len(cluster_centers)
-
+    if cluster_centers is not None:
+        resultado = classify_points(data, a, b, cluster_centers) 
+        resultado +=1
+        return (resultado, len(cluster_centers)) if resultado is not None else None  
+    else:
+        return None
